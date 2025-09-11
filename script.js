@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     //utilitário para formatar moeda (R$)
     function moedaBR(valor) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 
-'BRL' }).format(valor);
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
     }
 
 // normaliza estrada (troca vírgula por ponto e converte para número)
@@ -19,8 +18,8 @@ function toNumber(val) {
  const outPrecoComDesconto =
  document.getElementById('precoComDesconto');
  const outValorParcela = document.getElementById('valorParcela');
- const outTotalPagar = document.getElementById('totalPgar');
- const outeconomia = document.getElementById('economia');
+ const outTotalPagar = document.getElementById('totalPagar');
+ const outEconomia = document.getElementById('economia');
 
  if (!form) {
     console.error('form não encontrado (id="form"). verifique o HTML.');
@@ -36,15 +35,80 @@ function toNumber(val) {
         const preco = toNumber(document.getElementById('preco').value);
         const desconto = tonumber(document.getElementById('desconto').value);
         const taxa = toNumber(document.getElementById('taxa').value);
-        const parcelasRaw = parseInt(String(parcelasRaw).replace(',', ''),
-        10);
+        const parcelasRaw = parseInt(String(parcelasRaw).replace(',', ''), 10);
 
         //validações 
         if (isNaw(preco) || preco <= 0) throw new Error('informe um preço válido (> 0).');
         if (isNaw(desconto) || desconto < 0) throw new Error('Desconto deve ser ≥ 0.');
         if (isNaw(taxa) || taxa < 0) throw new Error('Taxa deve ser ≥ 0.');
         if (isNaw(parcelasd) || parcelas < 1) throw new Error('Números de parcelas deve ser ≥ 1.');
-    }
- }
 
+        // Cálculos
+        const precoComDesconto = preco * (1 - desconto / 100);
+        const i = taxa / 100; // axa decimal ap mês
+        const J_total = precoComDesconto * i * parcelas; // jurs simples total
+        const totalPagar = precoComDesconto + J_total;
+        const valorParcela = totalPagar / parcelas;
+        const economia = preco - precoComDesconto;
+
+        // Exibir resultados principais
+        outPrecoComDesconto.textContent = moedaBR(precoComDesconto);
+        outValorParcela.textContent = moedaBR(valorParcela);
+        outTotalPagar.textContent = moedaBR(totalPagar);
+        outEconomia.textContent = moedaBR(economia);
+        resultados.hidden = false;
+
+        // Montar/garantir tbody
+
+        let corpoTabela = document.querySelector('#tabela tbody');
+        if (!corpoTabela) {
+            const tabela = document.getElementById('tabela');
+            corpoTabela = document.createElement('tbody')
+            tabela.appendChild(corpoTabela);
+        }
+
+        corpoTabela.innerHTML = '';
+
+        const jurosMesConstante = precoComDesconto * i; // juros do mês constante
+        const amortizacaoConstante = precoComDesconto / parcelas; // amortizacao constante
+
+        for (let mes = 1; mes <= parcelas; mes++){
+            // evitar pequenas diferemças e arredondamento no último mês
+            const principalRestante = Math.max(0, precoComDesconto - amortizacaoConstante * mes);
+            const tr = document.createElement('tr');
+
+            const tdMes = document.createElement('td');
+            tdMes.textContent = mes;
+
+            const tdParcela = document.createElement('td');
+            tdParcela.textContent = moedaBR(valorParcela);
+
+            const tdJurosMes = document.createElement('td');
+            tdJurosMes.textContent = moedaBR(jurosMesConstante);
+
+            const tdAmortizacao = document.createElement('td');
+            tdAmortizacao.textContent = moedaBR(amortizacaoConstante);
+
+            const tdRestante = document.createElement('td');
+            tdRestante.textContent = moedaBR(principalRestante);
+
+            // Usa appendChild (mais compatível que append com múltiplos args)
+
+            tr.appendChild(tdMes);
+            tr.appendChild(tdParcela);
+            tr.appendChild(tdJurosMes);
+            tr.appendChild(tdAmortizacao);
+            tr.appendChild(tdRestante);
+            
+            corpoTabela.appendChild(tr);
 }
+tabelaSecao.hidden = false;
+} catch (err) {
+
+console.error(err);
+erro.textContent = err.message || 'Ocorreu um erro — abra o Console (F12) para ver detalhes.';
+resultados.hidden = true;
+tabelaSecao.hidden = true;
+}
+});
+});s
